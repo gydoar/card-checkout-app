@@ -20,3 +20,4 @@ cdk.out/
 
 # Documentos de la prueba (no se publican)
 *.pdf
+.pgdata/
