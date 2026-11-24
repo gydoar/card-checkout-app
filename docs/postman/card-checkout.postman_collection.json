@@ -1,0 +1,504 @@
+{
+  "info": {
+    "name": "Card Checkout API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Flujo completo del checkout. Ejecuta las peticiones en orden (o con el Runner): cada una guarda en variables lo que la siguiente necesita.\n\n1. Define `baseUrl` (local: http://localhost:3000/api/v1, o la URL desplegada + /api/v1).\n2. `gatewayBaseUrl` y `publicKey` se llenan solos con la petición de configuración.\n3. Tarjetas sandbox: 4242 4242 4242 4242 (aprobada) · 4111 1111 1111 1111 (rechazada)."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "transactionId",
+      "value": ""
+    },
+    {
+      "key": "deliveryId",
+      "value": ""
+    },
+    {
+      "key": "gatewayBaseUrl",
+      "value": ""
+    },
+    {
+      "key": "publicKey",
+      "value": ""
+    },
+    {
+      "key": "acceptanceToken",
+      "value": ""
+    },
+    {
+      "key": "personalDataAuthToken",
+      "value": ""
+    },
+    {
+      "key": "cardToken",
+      "value": ""
+    },
+    {
+      "key": "cardNumber",
+      "value": "4242424242424242"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Catálogo y stock",
+      "item": [
+        {
+          "name": "Listar productos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "Productos sembrados con su stock disponible."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json().data[0];",
+                  "pm.collectionVariables.set('productId', p.id);",
+                  "pm.test('incluye stock', () => pm.expect(p.stock).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalle de producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Producto inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/00000000-0000-4000-8000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "00000000-0000-4000-8000-000000000000"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 PRODUCT_NOT_FOUND', () => pm.expect(pm.response.json().error).to.eql('PRODUCT_NOT_FOUND'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Pago",
+      "item": [
+        {
+          "name": "Configuración del checkout",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/checkout/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "checkout",
+                "config"
+              ]
+            },
+            "description": "Tarifas, llave pública y términos. Los tokens de aceptación son de UN SOLO USO: vuelve a ejecutar esta petición antes de cada pago."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const c = pm.response.json();",
+                  "pm.collectionVariables.set('gatewayBaseUrl', c.gateway.baseUrl);",
+                  "pm.collectionVariables.set('publicKey', c.gateway.publicKey);",
+                  "pm.collectionVariables.set('acceptanceToken', c.legal.acceptanceToken);",
+                  "pm.collectionVariables.set('personalDataAuthToken', c.legal.personalDataAuthToken);",
+                  "pm.test('tarifas presentes', () => pm.expect(c.fees.baseFeeInCents).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tokenizar tarjeta (pasarela)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{publicKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/tokens/cards",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "tokens",
+                "cards"
+              ]
+            },
+            "description": "En la app esto lo hace el navegador directamente: el número de tarjeta nunca pasa por nuestro backend.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"{{cardNumber}}\",\n  \"cvc\": \"123\",\n  \"exp_month\": \"12\",\n  \"exp_year\": \"29\",\n  \"card_holder\": \"Ana Gomez\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('cardToken', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear transacción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "Crea la transacción en PENDING, reserva stock y cobra. Reintentar con la misma Idempotency-Key devuelve 200 con la transacción original (sin segundo cobro).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1,\n  \"customer\": {\n    \"email\": \"ana.gomez@example.com\",\n    \"fullName\": \"Ana Gómez\",\n    \"phone\": \"3001234567\"\n  },\n  \"shipping\": {\n    \"addressLine\": \"Calle 10 # 43-12\",\n    \"city\": \"Medellín\",\n    \"region\": \"Antioquia\",\n    \"postalCode\": \"050021\"\n  },\n  \"payment\": {\n    \"cardToken\": \"{{cardToken}}\",\n    \"installments\": 1,\n    \"acceptanceToken\": \"{{acceptanceToken}}\",\n    \"personalDataAuthToken\": \"{{personalDataAuthToken}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const t = pm.response.json();",
+                  "pm.collectionVariables.set('transactionId', t.id);",
+                  "pm.collectionVariables.set('deliveryId', t.delivery.id);",
+                  "pm.test('Location', () => pm.expect(pm.response.headers.get('Location')).to.include(t.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar transacción (polling)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/{{transactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "{{transactionId}}"
+              ]
+            },
+            "description": "Si sigue PENDING, el backend sincroniza con la pasarela antes de responder. Repite hasta APPROVED / DECLINED / ERROR."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "console.log('Estado:', pm.response.json().status);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar entrega",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/deliveries/{{deliveryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "deliveries",
+                "{{deliveryId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Validaciones y seguridad",
+      "item": [
+        {
+          "name": "Sin Idempotency-Key (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Monto inyectado por el cliente (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1,\n  \"totalInCents\": 100,\n  \"customer\": {\n    \"email\": \"a@b.co\",\n    \"fullName\": \"Ana\",\n    \"phone\": \"3001234567\"\n  },\n  \"shipping\": {\n    \"addressLine\": \"Calle 1 # 2-3\",\n    \"city\": \"Cali\",\n    \"region\": \"Valle del Cauca\"\n  },\n  \"payment\": {\n    \"cardToken\": \"tok_x\",\n    \"installments\": 1,\n    \"acceptanceToken\": \"xxxxxxxxxx\",\n    \"personalDataAuthToken\": \"xxxxxxxxxx\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rechaza el campo', () => pm.expect(pm.response.json().message).to.include('property totalInCents should not exist'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Webhook con firma inválida (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/payment-events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "payment-events"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"transaction.updated\",\n  \"data\": {\n    \"transaction\": {\n      \"id\": \"x\",\n      \"status\": \"APPROVED\"\n    }\n  },\n  \"signature\": {\n    \"properties\": [\n      \"transaction.id\"\n    ],\n    \"checksum\": \"falso\"\n  },\n  \"timestamp\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Salud",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

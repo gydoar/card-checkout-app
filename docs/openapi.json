@@ -1,0 +1,306 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/api/v1/health": {
+            "get": {
+                "operationId": "HealthController_check",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Verifica que la API y la base de datos respondan",
+                "tags": [
+                    "Salud"
+                ]
+            }
+        },
+        "/api/v1/products": {
+            "get": {
+                "operationId": "ProductsController_list",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Lista los productos con su stock disponible",
+                "tags": [
+                    "Productos (stock)"
+                ]
+            }
+        },
+        "/api/v1/products/{id}": {
+            "get": {
+                "operationId": "ProductsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": "PRODUCT_NOT_FOUND"
+                    }
+                },
+                "summary": "Detalle de un producto y unidades disponibles",
+                "tags": [
+                    "Productos (stock)"
+                ]
+            }
+        },
+        "/api/v1/checkout/config": {
+            "get": {
+                "description": "Tarifas, llave p\u00fablica para tokenizar la tarjeta y t\u00e9rminos que el usuario debe aceptar.",
+                "operationId": "CheckoutController_config",
+                "parameters": [],
+                "responses": {
+                    "502": {
+                        "description": "PAYMENT_GATEWAY_ERROR"
+                    }
+                },
+                "summary": "Configuraci\u00f3n p\u00fablica del checkout",
+                "tags": [
+                    "Checkout"
+                ]
+            }
+        },
+        "/api/v1/transactions": {
+            "post": {
+                "description": "Reserva stock, registra cliente y entrega, y env\u00eda el cobro. Responde 201 con el estado actual (normalmente PENDING). Con la misma Idempotency-Key responde 200 con la transacci\u00f3n original.",
+                "operationId": "TransactionsController_create",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "UUID \u00fanico por intento de pago",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateTransactionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reintento idempotente: transacci\u00f3n existente"
+                    },
+                    "201": {
+                        "description": "Transacci\u00f3n creada"
+                    },
+                    "404": {
+                        "description": "PRODUCT_NOT_FOUND"
+                    },
+                    "409": {
+                        "description": "INSUFFICIENT_STOCK | IDEMPOTENCY_CONFLICT"
+                    }
+                },
+                "summary": "Crea la transacci\u00f3n (PENDING) y cobra con la pasarela",
+                "tags": [
+                    "Transacciones"
+                ]
+            }
+        },
+        "/api/v1/transactions/{id}": {
+            "get": {
+                "description": "Si est\u00e1 PENDING se sincroniza con la pasarela antes de responder (pensado para polling).",
+                "operationId": "TransactionsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": "TRANSACTION_NOT_FOUND"
+                    }
+                },
+                "summary": "Consulta una transacci\u00f3n",
+                "tags": [
+                    "Transacciones"
+                ]
+            }
+        },
+        "/api/v1/deliveries/{id}": {
+            "get": {
+                "operationId": "DeliveriesController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": "DELIVERY_NOT_FOUND"
+                    }
+                },
+                "summary": "Estado de una entrega",
+                "tags": [
+                    "Entregas"
+                ]
+            }
+        },
+        "/api/v1/webhooks/payment-events": {
+            "post": {
+                "operationId": "PaymentEventsController_receive",
+                "parameters": [],
+                "responses": {
+                    "401": {
+                        "description": "INVALID_EVENT_SIGNATURE"
+                    }
+                },
+                "summary": "Recibe eventos de la pasarela (firma verificada con checksum)",
+                "tags": [
+                    "Webhooks"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "Card Checkout API",
+        "description": "API del checkout con tarjeta. Arquitectura hexagonal + ROP. Montos en centavos (COP). Errores con formato { statusCode, error, message }.",
+        "version": "1.0.0",
+        "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+        "schemas": {
+            "CustomerDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "ana.gomez@example.com"
+                    },
+                    "fullName": {
+                        "type": "string",
+                        "example": "Ana G\u00f3mez"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "3001234567",
+                        "description": "7 a 15 d\u00edgitos, opcionalmente con +"
+                    }
+                },
+                "required": [
+                    "email",
+                    "fullName",
+                    "phone"
+                ]
+            },
+            "ShippingDto": {
+                "type": "object",
+                "properties": {
+                    "addressLine": {
+                        "type": "string",
+                        "example": "Calle 10 # 43-12, Apto 501"
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "Medell\u00edn"
+                    },
+                    "region": {
+                        "type": "string",
+                        "example": "Antioquia"
+                    },
+                    "postalCode": {
+                        "type": "string",
+                        "example": "050021"
+                    }
+                },
+                "required": [
+                    "addressLine",
+                    "city",
+                    "region"
+                ]
+            },
+            "PaymentDto": {
+                "type": "object",
+                "properties": {
+                    "cardToken": {
+                        "type": "string",
+                        "example": "tok_stagtest_5113_abc",
+                        "description": "Token de tarjeta generado en el navegador"
+                    },
+                    "installments": {
+                        "type": "number",
+                        "example": 1,
+                        "minimum": 1,
+                        "maximum": 36
+                    },
+                    "acceptanceToken": {
+                        "type": "string",
+                        "description": "Token de aceptaci\u00f3n de t\u00e9rminos (GET /checkout/config)"
+                    },
+                    "personalDataAuthToken": {
+                        "type": "string",
+                        "description": "Token de autorizaci\u00f3n de datos personales (GET /checkout/config)"
+                    }
+                },
+                "required": [
+                    "cardToken",
+                    "installments",
+                    "acceptanceToken",
+                    "personalDataAuthToken"
+                ]
+            },
+            "CreateTransactionDto": {
+                "type": "object",
+                "properties": {
+                    "productId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "example": 1,
+                        "minimum": 1,
+                        "maximum": 5
+                    },
+                    "customer": {
+                        "$ref": "#/components/schemas/CustomerDto"
+                    },
+                    "shipping": {
+                        "$ref": "#/components/schemas/ShippingDto"
+                    },
+                    "payment": {
+                        "$ref": "#/components/schemas/PaymentDto"
+                    }
+                },
+                "required": [
+                    "productId",
+                    "quantity",
+                    "customer",
+                    "shipping",
+                    "payment"
+                ]
+            }
+        }
+    }
+}
