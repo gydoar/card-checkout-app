@@ -1,0 +1,54 @@
+{
+  "name": "card-checkout-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API de checkout con pago con tarjeta: arquitectura hexagonal + Railway Oriented Programming",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "jest",
+    "test:cov": "jest --coverage",
+    "db:migrate": "typeorm -d dist/infrastructure/persistence/typeorm/data-source.js migration:run",
+    "db:seed": "node dist/infrastructure/persistence/seed/run-seed.js",
+    "db:setup": "npm run build && npm run db:migrate && npm run db:seed",
+    "package:lambda": "bash scripts/package-lambda.sh"
+  },
+  "dependencies": {
+    "@codegenie/serverless-express": "^4.16.0",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/swagger": "^11.2.0",
+    "@nestjs/throttler": "^6.4.0",
+    "@nestjs/typeorm": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "helmet": "^8.1.0",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typeorm": "^0.3.26"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.888.0",
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/testing": "^11.1.6",
+    "@types/aws-lambda": "^8.10.152",
+    "@types/express": "^5.0.3",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.18.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.2"
+  }
+}
