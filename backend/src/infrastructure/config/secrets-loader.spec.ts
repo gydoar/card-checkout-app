@@ -4,7 +4,7 @@ import { secretsManagerReader } from './secrets-manager.reader';
 
 describe('loadSecretsIntoEnv', () => {
   it('mapea el secreto de RDS y el de la pasarela a variables de entorno', async () => {
-    const env: Record<string, string | undefined> = { DB_SECRET_ARN: 'arn:db', GATEWAY_SECRET_ARN: 'arn:gw' };
+    const env: Record<string, string | undefined> = { DB_SECRET_ID: 'arn:db', GATEWAY_SECRET_ID: 'arn:gw' };
     const secrets: Record<string, string> = {
       'arn:db': JSON.stringify({ username: 'app', password: 'pw', host: 'rds.local', port: 5432, dbname: 'checkout' }),
       'arn:gw': JSON.stringify({ PAYMENT_GATEWAY_PRIVATE_KEY: 'prv', PAYMENT_GATEWAY_PUBLIC_KEY: 'pub', OTRA: 'x' }),
