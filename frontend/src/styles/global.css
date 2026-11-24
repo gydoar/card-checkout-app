@@ -1,0 +1,152 @@
+/*
+ * Sistema de diseño TRAZO — minimalista, mobile-first.
+ * Todo color, espacio y radio sale de estos tokens: cambiar la marca = cambiar este bloque.
+ * Sin frameworks CSS: Flexbox + Grid + CSS Modules por componente.
+ */
+:root {
+  color-scheme: light dark;
+
+  --color-bg: #f5f4f0;
+  --color-surface: #ffffff;
+  --color-surface-muted: #ecebe6;
+  --color-ink: #111111;
+  --color-ink-muted: #5f5e5a;
+  --color-line: #dedcd5;
+  --color-accent: #ff4f1f;
+  --color-accent-ink: #ffffff;
+  --color-success: #13804a;
+  --color-danger: #c62828;
+  --color-warning: #a15c00;
+  --color-focus: #2f6bff;
+  --color-scrim: rgb(17 17 17 / 0.48);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  --text-2xl: clamp(2rem, 1.5rem + 2.5vw, 3.5rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 -8px 32px rgb(0 0 0 / 0.16);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration: 240ms;
+
+  --container: 1080px;
+  --header-height: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0e0e0d;
+    --color-surface: #1a1a19;
+    --color-surface-muted: #262624;
+    --color-ink: #f3f2ee;
+    --color-ink-muted: #a8a69f;
+    --color-line: #34332f;
+    --color-success: #3ccf7f;
+    --color-danger: #ff6b5e;
+    --color-warning: #f2b84b;
+    --color-focus: #7aa2ff;
+    --color-scrim: rgb(0 0 0 / 0.64);
+    --shadow-lg: 0 -8px 32px rgb(0 0 0 / 0.5);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+/* Foco visible solo con teclado: accesible sin ensuciar el diseño al tocar */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Contenido solo para lectores de pantalla */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

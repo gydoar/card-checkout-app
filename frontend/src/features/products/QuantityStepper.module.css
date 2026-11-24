@@ -1,0 +1,28 @@
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius-pill);
+}
+
+.stepper button {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: var(--text-lg);
+  cursor: pointer;
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stepper output {
+  min-width: 2ch;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

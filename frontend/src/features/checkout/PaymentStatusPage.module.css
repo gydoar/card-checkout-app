@@ -1,0 +1,118 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: calc(100dvh - var(--header-height));
+  padding: var(--space-5) var(--space-4);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  animation: pop 420ms var(--ease-out);
+}
+
+.success {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+}
+
+.danger {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  color: var(--color-danger);
+}
+
+/* Animación de "dibujado" del check */
+.check {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: draw 500ms 200ms var(--ease-out) forwards;
+}
+
+.title {
+  font-size: var(--text-xl);
+}
+
+.text {
+  color: var(--color-ink-muted);
+}
+
+.reason {
+  font-size: var(--text-sm);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  text-align: left;
+}
+
+.details div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.details dt {
+  color: var(--color-ink-muted);
+}
+
+.details dd {
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.card {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.redirect {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
