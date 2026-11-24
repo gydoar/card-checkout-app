@@ -1,0 +1,21 @@
+# PostgreSQL local para desarrollo. En AWS se usa RDS (ver /infra).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: card-checkout-db
+    environment:
+      POSTGRES_USER: checkout
+      POSTGRES_PASSWORD: checkout_local_pw
+      POSTGRES_DB: checkout
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U checkout -d checkout']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

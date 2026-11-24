@@ -1,0 +1,22 @@
+# Dependencias y builds
+node_modules/
+dist/
+build/
+coverage/
+.lambda/
+cdk.out/
+
+# Variables de entorno: NUNCA se versionan (contienen llaves de la pasarela)
+.env
+.env.*
+!.env.example
+
+# Sistema / editores
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Documentos de la prueba (no se publican)
+*.pdf
