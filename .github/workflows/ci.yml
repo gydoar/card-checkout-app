@@ -1,0 +1,102 @@
+# CI: cada push / PR ejecuta tipos, tests con umbral de cobertura (80%) y build.
+# CD: despliegue a AWS con CDK (manual o en main) usando OIDC, sin llaves de AWS guardadas.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Desplegar a AWS'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (NestJS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      # Postgres real embebido: no requiere servicios externos
+      - run: npm run test:cov
+      - run: npm run build
+
+  frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:cov
+      - run: npm run build
+
+  infra:
+    name: Infraestructura (CDK)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  deploy:
+    name: Despliegue AWS
+    needs: [backend, frontend, infra]
+    if: vars.AWS_DEPLOY_ROLE_ARN != '' && (github.ref == 'refs/heads/main' && github.event_name == 'push' || inputs.deploy)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - name: Empaquetar backend
+        working-directory: backend
+        run: npm ci && npm run package:lambda
+      - name: Build frontend
+        working-directory: frontend
+        run: npm ci && npm run build
+      - name: CDK deploy
+        working-directory: infra
+        env:
+          PAYMENT_GATEWAY_BASE_URL: ${{ vars.PAYMENT_GATEWAY_BASE_URL }}
+        run: npm ci && npx cdk deploy --require-approval never
