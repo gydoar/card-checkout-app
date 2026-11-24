@@ -16,6 +16,8 @@ module.exports = {
     '!src/infrastructure/persistence/typeorm/data-source.ts',
     '!src/infrastructure/persistence/seed/run-seed.ts',
   ],
+  globalSetup: '<rootDir>/test/setup/global-setup.mjs',
+  globalTeardown: '<rootDir>/test/setup/global-teardown.mjs',
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'json-summary'],
   coverageThreshold: {

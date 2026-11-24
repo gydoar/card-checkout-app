@@ -17,12 +17,12 @@
     "db:migrate": "typeorm -d dist/infrastructure/persistence/typeorm/data-source.js migration:run",
     "db:seed": "node dist/infrastructure/persistence/seed/run-seed.js",
     "db:setup": "npm run build && npm run db:migrate && npm run db:seed",
-    "package:lambda": "bash scripts/package-lambda.sh"
+    "package:lambda": "bash scripts/package-lambda.sh",
+    "db:start": "node scripts/dev-db.mjs"
   },
   "dependencies": {
     "@codegenie/serverless-express": "^4.16.0",
     "@nestjs/common": "^11.1.6",
-    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/swagger": "^11.2.0",
@@ -44,7 +44,9 @@
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.18.0",
+    "@types/pg": "^8.23.1",
     "@types/supertest": "^6.0.3",
+    "embedded-postgres": "16.16.0-beta.19",
     "jest": "^29.7.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.1",

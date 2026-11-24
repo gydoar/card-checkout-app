@@ -6,10 +6,11 @@ import { ResultAsync } from '../../shared/result';
  * El mensaje es genérico a propósito: los detalles internos de la BD
  * nunca deben llegar al cliente (OWASP A05 - Security Misconfiguration).
  */
+export const persistenceError = (): DomainError =>
+  domainError(DomainErrorCode.PERSISTENCE_ERROR, 'No fue posible completar la operación. Intenta de nuevo.');
+
 export const fromRepository = <T>(operation: Promise<T>): ResultAsync<T, DomainError> =>
-  ResultAsync.fromPromise(operation, () =>
-    domainError(DomainErrorCode.PERSISTENCE_ERROR, 'No fue posible completar la operación. Intenta de nuevo.'),
-  );
+  ResultAsync.fromPromise(operation, persistenceError);
 
 /** Convierte un `null` en un error de "no encontrado". */
 export const requireFound =
