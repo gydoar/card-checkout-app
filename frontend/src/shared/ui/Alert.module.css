@@ -1,0 +1,16 @@
+.alert {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  border-left: 4px solid;
+}
+
+.error {
+  background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+  border-color: var(--color-danger);
+}
+
+.info {
+  background: color-mix(in srgb, var(--color-focus) 10%, var(--color-surface));
+  border-color: var(--color-focus);
+}
