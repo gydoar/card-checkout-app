@@ -8,7 +8,7 @@
 | 🌐 **App** | **[card-checkout-app-b8d5l.ondigitalocean.app](https://card-checkout-app-b8d5l.ondigitalocean.app)** · DigitalOcean App Platform ([Despliegue](#-despliegue)) |
 | 📘 **Swagger (público)** | [card-checkout-app-b8d5l.ondigitalocean.app/api/v1/docs](https://card-checkout-app-b8d5l.ondigitalocean.app/api/v1/docs) · contrato versionado en [`docs/openapi.json`](docs/openapi.json) |
 | 🧪 **Postman** | [`docs/postman/card-checkout.postman_collection.json`](docs/postman/card-checkout.postman_collection.json) |
-| ✅ **Tests** | Backend **121** · Frontend **92** · Infra **7** — cobertura **> 99 %** de líneas ([detalle](#-tests-y-cobertura)) |
+| ✅ **Tests** | Backend **121** · Frontend **93** · Infra **7** — cobertura **> 99 %** de líneas ([detalle](#-tests-y-cobertura)) |
 
 <p align="center">
   <img src="docs/images/1-catalogo.png" width="150" alt="Catálogo" />
@@ -394,8 +394,8 @@ Todos con **Jest**. El umbral mínimo (80 %) está configurado en cada proyecto 
 
 | Proyecto | Tests | Sentencias | Ramas | Funciones | Líneas |
 |----------|------:|-----------:|------:|----------:|-------:|
-| **Backend** | 120 | **99.85 %** | **93.95 %** | **99.52 %** | **100 %** |
-| **Frontend** | 92 | **99.86 %** | **93.20 %** | **100 %** | **100 %** |
+| **Backend** | 121 | **99.85 %** | **94.02 %** | **99.52 %** | **100 %** |
+| **Frontend** | 93 | **99.86 %** | **93.20 %** | **100 %** | **100 %** |
 | **Infra (CDK)** | 7 | aserciones sobre la plantilla CloudFormation | | | |
 
 **Qué cubren:**
@@ -413,7 +413,7 @@ cd frontend && npm run test:cov
 cd infra    && npm test
 ```
 
-Además, el **flujo completo** se ejecutó en Chrome *headless* a 375 px contra el sandbox real. Resultado: pago aprobado, stock de 11 a 10, cero errores de consola, ningún desborde y ningún dato sensible en `localStorage`.
+Además, el **flujo completo** se ejecutó en Chrome *headless* a 375 px contra el sandbox real. Resultado: pago aprobado, stock de 11 a 10, cero errores de consola, ningún desborde y ningún dato sensible en `localStorage`. La misma prueba se repitió **contra producción** (pago aprobado, stock de 12 a 11), junto con la recuperación tras refresh a mitad del formulario.
 
 ---
 
