@@ -44,6 +44,13 @@ describe('loadConfig', () => {
     expect(config.checkout.fees.baseFeeInCents).toBe(0);
   });
 
+  it('prefiere el CA inline (DB_SSL_CA) sobre el archivo', () => {
+    const readFile = jest.fn(() => 'PEM-ARCHIVO');
+    const config = loadConfig({ ...validEnv, DB_SSL: 'true', DB_SSL_CA: ' PEM-INLINE ', DB_SSL_CA_PATH: '/ca.pem' }, readFile);
+    expect(config.database.sslCa).toBe('PEM-INLINE');
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
   it('falla indicando TODAS las variables faltantes o inválidas', () => {
     const load = () => loadConfig({ PORT: 'abc', PAYMENT_GATEWAY_BASE_URL: 'http://inseguro' });
     expect(load).toThrow(/DB_HOST es obligatoria/);

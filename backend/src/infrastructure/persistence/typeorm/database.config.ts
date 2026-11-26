@@ -9,7 +9,7 @@ export interface DatabaseConfig {
   readonly password: string;
   readonly database: string;
   readonly ssl: boolean;
-  /** PEM con las CAs de RDS. Si existe, el certificado del servidor se verifica estrictamente. */
+  /** PEM con la(s) CA(s) del proveedor. Si existe, el certificado del servidor se verifica estrictamente. */
   readonly sslCa?: string;
 }
 
@@ -25,7 +25,7 @@ export const buildDataSourceOptions = (config: DatabaseConfig): DataSourceOption
   username: config.username,
   password: config.password,
   database: config.database,
-  // En AWS la conexión va cifrada y se valida contra el bundle de CAs de RDS (incluido en el paquete Lambda)
+  // En la nube la conexión va cifrada y el certificado del servidor se valida contra la CA del proveedor
   ssl: config.ssl ? (config.sslCa ? { ca: config.sslCa, rejectUnauthorized: true } : { rejectUnauthorized: false }) : false,
   entities: ORM_ENTITIES,
   migrations: [InitialSchema1764000000000],

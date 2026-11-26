@@ -15,7 +15,7 @@ export interface AppConfig {
 
 type Env = Record<string, string | undefined>;
 
-/** En local se usa un .env; en AWS las variables llegan del entorno de Lambda. */
+/** En local se usa un .env; en la nube las variables llegan del entorno (Lambda o App Platform). */
 export const loadDotEnvIfPresent = (path = '.env', env: Env = process.env): void => {
   if (!existsSync(path)) return;
   const parsed = parseEnv(readFileSync(path, 'utf8'));
@@ -49,7 +49,9 @@ export const loadConfig = (env: Env = process.env, readFile: (path: string) => s
   const baseUrl = required('PAYMENT_GATEWAY_BASE_URL');
   if (baseUrl && !baseUrl.startsWith('https://')) problems.push('PAYMENT_GATEWAY_BASE_URL debe usar https');
 
+  // CA del servidor de BD: en AWS viene en un archivo (bundle de RDS); en DigitalOcean, inline en DB_SSL_CA
   const sslCaPath = env.DB_SSL_CA_PATH;
+  const sslCaInline = env.DB_SSL_CA?.trim();
 
   const config: AppConfig = {
     nodeEnv: env.NODE_ENV ?? 'development',
@@ -65,7 +67,7 @@ export const loadConfig = (env: Env = process.env, readFile: (path: string) => s
       password: required('DB_PASSWORD'),
       database: required('DB_NAME'),
       ssl: env.DB_SSL === 'true',
-      sslCa: sslCaPath ? readFile(sslCaPath) : undefined,
+      sslCa: sslCaInline || (sslCaPath ? readFile(sslCaPath) : undefined),
     },
     gateway: {
       baseUrl: baseUrl.replace(/\/+$/, ''),
