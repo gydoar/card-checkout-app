@@ -17,7 +17,7 @@
   <img src="docs/images/4-resumen.png" width="150" alt="Resumen en backdrop" />
   <img src="docs/images/5-resultado.png" width="150" alt="Resultado" />
 </p>
-<p align="center"><sub>iPhone SE (375 × 667): 1. Catálogo → 2. Tarjeta/Entrega → 3. Resumen → 4. Estado final → 5. Producto con stock actualizado</sub></p>
+<p align="center"><sub>iPhone SE (375 × 667): 1. Catálogo → 2. Producto → 3. Tarjeta y entrega → 4. Resumen → 5. Resultado del pago</sub></p>
 
 ---
 
@@ -68,6 +68,21 @@
 ## 🧱 Arquitectura
 
 ### Vista general
+
+**Despliegue activo (DigitalOcean App Platform):** un solo dominio; el router envía `/api/*` al backend y el resto al SPA.
+
+```mermaid
+flowchart LR
+  U[📱 Usuario] -->|HTTPS| R[App Platform<br/>CDN · TLS · router]
+  R -->|/*| W[Sitio estático<br/>SPA React · CSP]
+  R -->|/api/*| A[Servicio NestJS<br/>Helmet · rate limit]
+  A -->|TLS verificado| DB[(PostgreSQL 16<br/>firewall: solo la app)]
+  A --> PG[Pasarela de pagos]
+  U -.->|tokeniza tarjeta<br/>llave pública| PG
+  J[Job PRE_DEPLOY<br/>migraciones + seed] -.-> DB
+```
+
+**Alternativa lista en AWS (CDK)**, misma idea de dominio único:
 
 ```mermaid
 flowchart LR
@@ -349,7 +364,7 @@ Location: /api/v1/transactions/0b6c…
 | **A08 · Integridad** | Webhook con firma verificada antes de tocar la BD. Los eventos repetidos no tienen efecto (idempotencia). |
 | **A09 · Logging** | Se registran rutas y estados, nunca cuerpos, tokens ni llaves. |
 | **Secretos** | `.env` ignorado por git. En DigitalOcean son variables `SECRET` cifradas; en AWS viven en Secrets Manager y la Lambda solo recibe sus identificadores. |
-| **Frontend** | CSP estricta en CloudFront (`script-src 'self'`, `connect-src 'self' <pasarela>`, `frame-ancestors 'none'`), enlaces con `rel="noopener noreferrer"`, `credentials: 'omit'` y nada sensible en `localStorage`. |
+| **Frontend** | CSP estricta (`script-src 'self'`, `connect-src 'self' <pasarela>`): como cabecera en CloudFront o como `<meta>` en App Platform. El dominio `*.ondigitalocean.app` pertenece al TLD `.app`, que está **precargado con HSTS en los navegadores**: nunca se sirve por HTTP. Además, enlaces con `rel="noopener noreferrer"`, `credentials: 'omit'` y nada sensible en `localStorage`. |
 
 ---
 
@@ -359,7 +374,7 @@ El progreso del checkout se guarda en `localStorage` (clave `trazo.checkout.v1`,
 
 | Si recargas en… | Se recupera |
 |-----------------|-------------|
-| Formulario (paso 2) | Vuelve a abrirse con los datos de entrega diligenciados. |
+| Formulario (paso 2) | Vuelve a abrirse con los datos de entrega **que ibas escribiendo** (se guardan en cada cambio). |
 | Resumen (paso 3) | Vuelve al formulario con la entrega intacta y un aviso: *"Por tu seguridad no guardamos los datos de la tarjeta"*. |
 | Mientras se procesa (paso 4) | Retoma el polling en `/checkout/:id` y muestra el resultado. |
 | Pago enviado sin respuesta | La `Idempotency-Key` se conserva: al reintentar, el backend devuelve la transacción original en lugar de cobrar otra vez. |
@@ -414,6 +429,16 @@ cd infra    && npm test
 ```
 
 Además, el **flujo completo** se ejecutó en Chrome *headless* a 375 px contra el sandbox real. Resultado: pago aprobado, stock de 11 a 10, cero errores de consola, ningún desborde y ningún dato sensible en `localStorage`. La misma prueba se repitió **contra producción** (pago aprobado, stock de 12 a 11), junto con la recuperación tras refresh a mitad del formulario.
+
+**Navegadores y tamaños (producción, Playwright):**
+
+| Motor | Móvil 375 px | Tablet 768 px | Escritorio 1440 px |
+|---|---|---|---|
+| Chromium (Chrome, Edge) | ✅ pago aprobado | ✅ hasta el resumen | ✅ hasta el resumen |
+| Firefox | ✅ pago aprobado | ✅ hasta el resumen | ✅ hasta el resumen |
+| WebKit (Safari) | ✅ pago aprobado | ✅ hasta el resumen | ✅ hasta el resumen |
+
+En todos: sin desbordes horizontales, sin errores de JavaScript, imágenes cargadas y primera carga de 1.2 a 2.2 s. Las imágenes de producto son SVG de unos 1.3 KB, y los assets se sirven comprimidos con Brotli (≈95 KB las librerías).
 
 ---
 
