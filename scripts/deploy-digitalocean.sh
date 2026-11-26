@@ -56,7 +56,7 @@ fi
 
 # Firewall de la BD: solo la app puede conectarse (idempotente)
 APP_ID="$(doctl apps list --format ID,Spec.Name --no-header | awk -v n="$APP_NAME" '$2 == n { print $1 }')"
-if ! doctl databases firewalls list "$DB_ID" --format Type,Value --no-header | grep -q "app *$APP_ID"; then
+if ! doctl databases firewalls list "$DB_ID" | grep -q "app *$APP_ID"; then
   doctl databases firewalls append "$DB_ID" --rule "app:$APP_ID" >/dev/null
   echo "Firewall: la BD solo acepta conexiones de la app."
 fi
