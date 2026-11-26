@@ -37,8 +37,8 @@ NODE
 APP_ID="$(doctl apps list --format ID,Spec.Name --no-header | awk -v n="$APP_NAME" '$2 == n { print $1 }')"
 if [ -z "$APP_ID" ]; then
   echo "Creando la app $APP_NAME..."
-  doctl apps create --spec "$SPEC" --wait --format ID,DefaultIngress,ActiveDeployment.Phase
+  doctl apps create --spec "$SPEC" --wait --format ID,DefaultIngress
 else
   echo "Actualizando la app $APP_NAME ($APP_ID)..."
-  doctl apps update "$APP_ID" --spec "$SPEC" --wait --format ID,DefaultIngress,ActiveDeployment.Phase
+  doctl apps update "$APP_ID" --spec "$SPEC" --wait --format ID,DefaultIngress
 fi
