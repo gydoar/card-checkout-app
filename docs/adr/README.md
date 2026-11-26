@@ -9,3 +9,4 @@ Cada ADR documenta una decisión relevante: el contexto, lo que se decidió y su
 | [003](003-reserva-atomica-de-stock.md) | Reserva atómica de stock al crear la transacción | Aceptada |
 | [004](004-idempotencia-polling-y-webhook.md) | Idempotencia + polling + webhook para el estado del pago | Aceptada |
 | [005](005-aws-serverless-mismo-dominio.md) | AWS serverless con SPA y API bajo el mismo dominio | Aceptada |
+| [006](006-digitalocean-app-platform.md) | Despliegue activo en DigitalOcean App Platform (AWS CDK como alternativa) | Aceptada |

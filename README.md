@@ -1,14 +1,14 @@
 # TRAZO · Checkout con tarjeta
 
 > Tienda mobile-first de zapatillas con checkout de pago con tarjeta de crédito: catálogo con stock en vivo, pago en 5 pasos, recuperación tras refresh y entrega asignada al aprobarse el pago.
-> **React + Redux** · **NestJS con arquitectura hexagonal + ROP** · **PostgreSQL** · **AWS (CDK)**
+> **React + Redux** · **NestJS con arquitectura hexagonal + ROP** · **PostgreSQL** · **DigitalOcean App Platform** (activo) · **AWS CDK** (listo)
 
 | | |
 |---|---|
-| 🌐 **App** | `<SiteUrl>` *(se completa tras `cdk deploy`, ver [Despliegue](#-despliegue-en-aws))* |
+| 🌐 **App** | `<SiteUrl>` *(ver [Despliegue](#-despliegue))* |
 | 📘 **Swagger (público)** | `<SiteUrl>/api/v1/docs` · contrato versionado en [`docs/openapi.json`](docs/openapi.json) |
 | 🧪 **Postman** | [`docs/postman/card-checkout.postman_collection.json`](docs/postman/card-checkout.postman_collection.json) |
-| ✅ **Tests** | Backend **120** · Frontend **92** · Infra **7** — cobertura **> 99 %** de líneas ([detalle](#-tests-y-cobertura)) |
+| ✅ **Tests** | Backend **121** · Frontend **92** · Infra **7** — cobertura **> 99 %** de líneas ([detalle](#-tests-y-cobertura)) |
 
 <p align="center">
   <img src="docs/images/1-catalogo.png" width="150" alt="Catálogo" />
@@ -34,7 +34,7 @@
 9. [Frontend y UX](#-frontend-y-ux)
 10. [Tests y cobertura](#-tests-y-cobertura)
 11. [Ejecutar en local](#-ejecutar-en-local)
-12. [Despliegue en AWS](#-despliegue-en-aws)
+12. [Despliegue](#-despliegue)
 13. [Uso de IA](#-uso-de-ia)
 
 ---
@@ -348,7 +348,7 @@ Location: /api/v1/transactions/0b6c…
 | **A07 · Abuso / card testing** | Rate limiting en la app (120/min por IP; 10/min en `POST /transactions`) y throttling en API Gateway. |
 | **A08 · Integridad** | Webhook con firma verificada antes de tocar la BD. Los eventos repetidos no tienen efecto (idempotencia). |
 | **A09 · Logging** | Se registran rutas y estados, nunca cuerpos, tokens ni llaves. |
-| **Secretos** | `.env` ignorado por git. En AWS los secretos viven en Secrets Manager y la Lambda solo recibe sus identificadores. |
+| **Secretos** | `.env` ignorado por git. En DigitalOcean son variables `SECRET` cifradas; en AWS viven en Secrets Manager y la Lambda solo recibe sus identificadores. |
 | **Frontend** | CSP estricta en CloudFront (`script-src 'self'`, `connect-src 'self' <pasarela>`, `frame-ancestors 'none'`), enlaces con `rel="noopener noreferrer"`, `credentials: 'omit'` y nada sensible en `localStorage`. |
 
 ---
@@ -440,7 +440,28 @@ npm run dev                         # http://localhost:5173  (proxy /api -> :300
 
 ---
 
-## ☁ Despliegue en AWS
+## ☁ Despliegue
+
+El mismo código corre en dos proveedores. Solo cambia la configuración, porque la nube es un adaptador más de la arquitectura hexagonal.
+
+### Activo: DigitalOcean App Platform
+
+Descrito como código en [`.do/app.yaml`](.do/app.yaml):
+- sitio estático para el SPA;
+- servicio NestJS;
+- job `PRE_DEPLOY` con las migraciones y el seed;
+- PostgreSQL 16 con TLS verificado.
+
+El router envía `/api/*` al servicio, así que SPA y API comparten dominio.
+
+```bash
+doctl auth init                     # una vez, con un token de API
+./scripts/deploy-digitalocean.sh    # llaves de backend/.env -> variables SECRET, sin tocar el repo
+```
+
+👉 Guía: **[docs/DEPLOY-DIGITALOCEAN.md](docs/DEPLOY-DIGITALOCEAN.md)** · Por qué dos proveedores: [ADR 006](docs/adr/006-digitalocean-app-platform.md)
+
+### Alternativa lista: AWS (CDK)
 
 Infraestructura como código con **AWS CDK**: VPC en 3 capas, RDS PostgreSQL, Lambda (arm64), API Gateway, S3 y CloudFront, más migraciones automáticas en cada despliegue. Todo entra en la capa gratuita.
 

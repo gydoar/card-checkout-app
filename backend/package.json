@@ -5,7 +5,7 @@
   "description": "API de checkout con pago con tarjeta: arquitectura hexagonal + Railway Oriented Programming",
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",

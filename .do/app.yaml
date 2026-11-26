@@ -1,0 +1,77 @@
+# DigitalOcean App Platform: especificación de la app (infraestructura como código).
+#
+#   Usuario ──HTTPS──> App Platform (CDN + TLS) ──/*─────> sitio estático (SPA React)
+#                                               └──/api/*──> servicio NestJS ──TLS──> PostgreSQL 16
+#                                                                └──────────> Pasarela de pagos
+#
+# Los valores __ASÍ__ son marcadores: scripts/deploy-digitalocean.sh los reemplaza con las
+# llaves de backend/.env en un archivo temporal fuera del repo. Aquí nunca hay secretos.
+name: card-checkout-app
+region: nyc
+
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    production: false
+
+services:
+  - name: api
+    git: &source
+      repo_clone_url: https://github.com/gydoar/card-checkout-app.git
+      branch: main
+    source_dir: backend
+    build_command: npm run build
+    run_command: npm start
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    health_check:
+      http_path: /api/v1/health
+    envs: &api-envs
+      - { key: NODE_ENV, value: production, scope: RUN_TIME }
+      - { key: PORT, value: "8080", scope: RUN_TIME }
+      # SPA y API comparten dominio (enrutado por /api): no se necesita CORS
+      - { key: CORS_ORIGINS, value: "", scope: RUN_TIME }
+      - { key: DB_HOST, value: "${db.HOSTNAME}", scope: RUN_TIME }
+      - { key: DB_PORT, value: "${db.PORT}", scope: RUN_TIME }
+      - { key: DB_USER, value: "${db.USERNAME}", scope: RUN_TIME }
+      - { key: DB_PASSWORD, value: "${db.PASSWORD}", scope: RUN_TIME }
+      - { key: DB_NAME, value: "${db.DATABASE}", scope: RUN_TIME }
+      - { key: DB_SSL, value: "true", scope: RUN_TIME }
+      # CA de la BD: el certificado del servidor se valida estrictamente
+      - { key: DB_SSL_CA, value: "${db.CA_CERT}", scope: RUN_TIME }
+      - { key: PAYMENT_GATEWAY_BASE_URL, value: "__PAYMENT_GATEWAY_BASE_URL__", scope: RUN_TIME }
+      - { key: PAYMENT_GATEWAY_PUBLIC_KEY, value: "__PAYMENT_GATEWAY_PUBLIC_KEY__", scope: RUN_TIME }
+      - { key: PAYMENT_GATEWAY_PRIVATE_KEY, value: "__PAYMENT_GATEWAY_PRIVATE_KEY__", scope: RUN_TIME, type: SECRET }
+      - { key: PAYMENT_GATEWAY_INTEGRITY_SECRET, value: "__PAYMENT_GATEWAY_INTEGRITY_SECRET__", scope: RUN_TIME, type: SECRET }
+      - { key: PAYMENT_GATEWAY_EVENTS_SECRET, value: "__PAYMENT_GATEWAY_EVENTS_SECRET__", scope: RUN_TIME, type: SECRET }
+
+jobs:
+  # Migraciones + seed antes de cada despliegue (ambos idempotentes)
+  - name: migrate
+    kind: PRE_DEPLOY
+    git: *source
+    source_dir: backend
+    build_command: npm run build
+    run_command: npm run db:migrate && npm run db:seed
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    envs: *api-envs
+
+static_sites:
+  - name: web
+    git: *source
+    source_dir: frontend
+    build_command: npm run build
+    output_dir: dist
+    catchall_document: index.html
+    envs:
+      # Solo para la CSP del <meta> (connect-src): la URL no se guarda en el repo
+      - { key: PAYMENT_GATEWAY_BASE_URL, value: "__PAYMENT_GATEWAY_BASE_URL__", scope: BUILD_TIME }
+
+ingress:
+  rules:
+    - match: { path: { prefix: /api } }
+      component: { name: api, preserve_path_prefix: true }
+    - match: { path: { prefix: / } }
+      component: { name: web }
