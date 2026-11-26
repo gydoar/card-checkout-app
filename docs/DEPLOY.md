@@ -1,4 +1,6 @@
-# Despliegue en AWS
+# Despliegue en AWS (alternativa)
+
+> El despliegue activo está en DigitalOcean: [DEPLOY-DIGITALOCEAN.md](DEPLOY-DIGITALOCEAN.md). Esta guía queda lista para cuando se use AWS.
 
 Toda la infraestructura está en [`/infra`](../infra) (AWS CDK, TypeScript). Un solo comando crea:
 
