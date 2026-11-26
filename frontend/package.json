@@ -4,6 +4,9 @@
   "private": true,
   "description": "SPA mobile-first del checkout con tarjeta (React + Redux Toolkit)",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
