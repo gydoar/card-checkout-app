@@ -10,10 +10,13 @@ name: card-checkout-app
 region: nyc
 
 databases:
+  # Clúster administrado (backups diarios, firewall). La BD "dev" de App Platform no sirve:
+  # en PostgreSQL 15+ su usuario no puede crear tablas ni esquemas.
   - name: db
     engine: PG
     version: "16"
-    production: false
+    production: true
+    cluster_name: card-checkout-db
 
 services:
   - name: api

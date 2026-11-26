@@ -450,7 +450,7 @@ Descrito como código en [`.do/app.yaml`](.do/app.yaml):
 - sitio estático para el SPA;
 - servicio NestJS;
 - job `PRE_DEPLOY` con las migraciones y el seed;
-- PostgreSQL 16 con TLS verificado.
+- clúster PostgreSQL 16 administrado, con TLS verificado y firewall que solo admite la app.
 
 El router envía `/api/*` al servicio, así que SPA y API comparten dominio.
 
