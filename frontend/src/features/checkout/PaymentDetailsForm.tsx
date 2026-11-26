@@ -1,5 +1,5 @@
-import { FormEvent, useMemo, useState } from 'react';
-import { useAppSelector } from '../../app/store';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../app/store';
 import { Alert } from '../../shared/ui/Alert';
 import { Button } from '../../shared/ui/Button';
 import { SelectField, TextField } from '../../shared/ui/Field';
@@ -14,6 +14,7 @@ import {
   validateCard,
 } from './card/card-validation';
 import { useConfirmPaymentDetails } from './card/useConfirmPaymentDetails';
+import { deliveryDraftChanged } from './checkout.slice';
 import { COLOMBIA_REGIONS, DeliveryFormValues, validateDelivery } from './delivery/delivery-validation';
 import styles from './PaymentDetailsForm.module.css';
 
@@ -31,6 +32,7 @@ const EMPTY_CARD: CardFormValues = { number: '', holder: '', expiry: '', cvc: ''
  * y se descartan al desmontarlo.
  */
 export const PaymentDetailsForm = () => {
+  const dispatch = useAppDispatch();
   const savedDelivery = useAppSelector((state) => state.checkout.delivery);
   const notice = useAppSelector((state) => state.checkout.notice);
   const { confirm, submitting, error } = useConfirmPaymentDetails();
@@ -40,6 +42,12 @@ export const PaymentDetailsForm = () => {
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [cvcFocused, setCvcFocused] = useState(false);
+
+  // La entrega se sincroniza con Redux en cada cambio (y de ahí al almacenamiento):
+  // un refresh a mitad del formulario no hace perder lo escrito. La tarjeta, en cambio, no se guarda.
+  useEffect(() => {
+    dispatch(deliveryDraftChanged(delivery));
+  }, [delivery, dispatch]);
 
   const brand = detectBrand(card.number);
   const cardErrors = useMemo(() => validateCard(card), [card]);
