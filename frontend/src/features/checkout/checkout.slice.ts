@@ -130,6 +130,13 @@ const checkoutSlice = createSlice({
       state.error = null;
       state.notice = null;
     },
+    /**
+     * Borrador de la entrega mientras se escribe: así sobrevive a un refresh antes de confirmar.
+     * La tarjeta NO pasa por aquí: sus datos nunca salen del estado local del formulario.
+     */
+    deliveryDraftChanged(state, { payload }: PayloadAction<DeliveryFormValues>) {
+      state.delivery = payload;
+    },
     editDetails(state) {
       state.step = 'DETAILS';
       state.error = null;
@@ -195,6 +202,6 @@ const checkoutSlice = createSlice({
   },
 });
 
-export const { startCheckout, closeCheckout, editDetails, paymentDetailsConfirmed, dismissError, resetCheckout } =
+export const { startCheckout, closeCheckout, deliveryDraftChanged, editDetails, paymentDetailsConfirmed, dismissError, resetCheckout } =
   checkoutSlice.actions;
 export const checkoutReducer = checkoutSlice.reducer;

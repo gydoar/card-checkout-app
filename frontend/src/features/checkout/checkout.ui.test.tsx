@@ -11,6 +11,7 @@ import {
 import { mockFetch, route } from '../../test/mock-fetch';
 import { renderWithProviders } from '../../test/render';
 import { CardPreview } from './card/CardPreview';
+import { loadPersistedCheckout, STORAGE_KEY } from './checkout.persistence';
 import { initialCheckoutState } from './checkout.slice';
 import { PaymentDetailsForm } from './PaymentDetailsForm';
 import { MAX_POLL_ATTEMPTS, PaymentStatusPage, POLL_INTERVAL_MS, REDIRECT_SECONDS } from './PaymentStatusPage';
@@ -87,6 +88,24 @@ describe('PaymentDetailsForm (paso 2)', () => {
     await user.type(screen.getByLabelText('CVC'), '123');
     await user.click(screen.getByRole('button', { name: 'Continuar al resumen' }));
     await waitFor(() => expect(store.getState().checkout.card).toMatchObject({ brand: 'MASTERCARD', lastFour: '4444' }));
+  });
+
+  it('guarda la entrega mientras se escribe (sobrevive a un refresh) pero nunca la tarjeta', async () => {
+    const { user } = renderWithProviders(<PaymentDetailsForm />, {
+      preloadedState: checkoutState({ step: 'DETAILS', productId: product.id, quantity: 1, config: configFixture }),
+    });
+    await user.type(screen.getByLabelText('Número de tarjeta'), '4242424242424242');
+    await user.type(screen.getByLabelText('CVC'), '987');
+    await user.type(screen.getByLabelText('Nombre completo'), 'Ana Gómez');
+    await user.type(screen.getByLabelText('Dirección'), 'Calle 10 # 43-12');
+
+    // "Refresh": el estado se reconstruye solo desde el almacenamiento
+    const restored = loadPersistedCheckout();
+    expect(restored).toMatchObject({ step: 'DETAILS', productId: product.id });
+    expect(restored.delivery).toMatchObject({ fullName: 'Ana Gómez', addressLine: 'Calle 10 # 43-12' });
+    const raw = localStorage.getItem(STORAGE_KEY)!;
+    expect(raw).not.toContain('4242424242424242');
+    expect(raw).not.toContain('987');
   });
 
   it('muestra el aviso tras refresh y los errores de la pasarela', async () => {
