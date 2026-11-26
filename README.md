@@ -5,8 +5,8 @@
 
 | | |
 |---|---|
-| 🌐 **App** | `<SiteUrl>` *(ver [Despliegue](#-despliegue))* |
-| 📘 **Swagger (público)** | `<SiteUrl>/api/v1/docs` · contrato versionado en [`docs/openapi.json`](docs/openapi.json) |
+| 🌐 **App** | **[card-checkout-app-b8d5l.ondigitalocean.app](https://card-checkout-app-b8d5l.ondigitalocean.app)** · DigitalOcean App Platform ([Despliegue](#-despliegue)) |
+| 📘 **Swagger (público)** | [card-checkout-app-b8d5l.ondigitalocean.app/api/v1/docs](https://card-checkout-app-b8d5l.ondigitalocean.app/api/v1/docs) · contrato versionado en [`docs/openapi.json`](docs/openapi.json) |
 | 🧪 **Postman** | [`docs/postman/card-checkout.postman_collection.json`](docs/postman/card-checkout.postman_collection.json) |
 | ✅ **Tests** | Backend **121** · Frontend **92** · Infra **7** — cobertura **> 99 %** de líneas ([detalle](#-tests-y-cobertura)) |
 

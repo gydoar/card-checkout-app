@@ -7,7 +7,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api/v1"
+      "value": "https://card-checkout-app-b8d5l.ondigitalocean.app/api/v1"
     },
     {
       "key": "productId",
